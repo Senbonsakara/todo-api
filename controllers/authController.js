@@ -31,31 +31,25 @@ export const signup = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    const { email, userName, password } = req.body;
+    const { email, password } = req.body;
     //Find a user using their unique identifier
-    const user = await UserModel.findOne({
-      $or: [{ email: email }, { username: userName }],
-    });
+    const user = await UserModel.findOne({ email: email });
     if (!user) {
-      res.status(401).json("No user found");
+      res.status(401).json("Invalid email or password");
     } else {
       //Verify their password
       const correctPassword = bcrypt.compareSync(password, user.password);
       if (!correctPassword) {
-        res.status(401).json("Invalid credentials");
+        res.status(401).json("Invalid email or password");
       } else {
         //Generate a token
-        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-          expiresIn: "72h",
+        const accessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+          expiresIn: "1h",
         });
-        res.status(201).json({
-          message: "Login successful",
-          accessToken: token,
-          user: {
-            firstName: user.firstName,
-            lastName: user.lastName,
-            username: user.userName,
-          },
+
+        res.json({
+          message: "Login Successful",
+          token: accessToken,
         });
       }
     }
